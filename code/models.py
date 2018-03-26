@@ -43,24 +43,24 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
     This method defines the model and returns the required TensorFlow operations.
 
     slot_vectors, value_vectors should be of size [label_count + 2, 300].
-    For None, we should just pass zero vectors for both.
+    For None, we should just pass zero vectors for both. 
 
-    Then, replicate using these vectors the old NBT and then combine each value's (including NONE) into softmax.
+    Then, replicate using these vectors the old NBT and then combine each value's (including NONE) into softmax. 
 
 
-    List of values learned by this model:
+    List of values learned by this model: 
 
-    1) h_utterance_representation, which uses a CNN to learn a representation of the utterance r.
+    1) h_utterance_representation, which uses a CNN to learn a representation of the utterance r.  
     2) candidates_transform, which includes w_candidates and b_candidates, which transforms candidate values to vector c.
-    3) w_joint_hidden_layer and b_joint_hidden_layer, which collapses the interaction of r and c to an intermediate vector.
-    4) w_joint_presoftmax and b_joint_presoftmax, which collapse the intermediate layer to a single feature.
+    3) w_joint_hidden_layer and b_joint_hidden_layer, which collapses the interaction of r and c to an intermediate vector. 
+    4) w_joint_presoftmax and b_joint_presoftmax, which collapse the intermediate layer to a single feature. 
     5) sysreq_w_hidden_layer and sysreq_b_hidden_layer, which compute intermediate sysreq representation.
-    6) TODO: sysreq_w_softmax and sysreq_b_softmax, which map this to final decision. -- currently not size independent.
-    7) TODO: confirm_w1_hidden_layer, confirm_b1_hidden_layer, confirm_w1_softmax, confirm_b1_softmax: for confirmations. -- currently does not work.
-    8) a_memory, b_memory, a_current, b_current: for the belief state updates, composed into matrix.
+    6) TODO: sysreq_w_softmax and sysreq_b_softmax, which map this to final decision. -- currently not size independent. 
+    7) TODO: confirm_w1_hidden_layer, confirm_b1_hidden_layer, confirm_w1_softmax, confirm_b1_softmax: for confirmations. -- currently does not work. 
+    8) a_memory, b_memory, a_current, b_current: for the belief state updates, composed into matrix.   
 
     If all of these are initialised and then supplied to each of the models, we could train them together (batch of each slot), and just save
-    these variables, then at test time, just load them (as session even), and then initialise all of the models with them.
+    these variables, then at test time, just load them (as session even), and then initialise all of the models with them. 
 
     """
 
@@ -118,24 +118,24 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
     # b_candidates = tf.Variable(tf.zeros([vector_dimension]))
 
     # candidates = tf.nn.sigmoid(tf.matmul(candidate_sum, w_candidates) + b_candidates)
-    # candidates = tf.nn.sigmoid(tf.matmul(candidate_values, w_candidates) + b_candidates)
+    #candidates = tf.nn.sigmoid(tf.matmul(candidate_values, w_candidates) + b_candidates)
 
     # filter needs to be of shape: filter_height = 1,2,3, filter_width=300, in_channel=1, out_channel=num_filters
-    # filter just dot products - in images these then overlap from different regions - we don't have that.
+    # filter just dot products - in images these then overlap from different regions - we don't have that. 
     h_utterance_representation = define_CNN_model(utterance_representations_full, num_filters, vector_dimension,
                                                   longest_utterance_length)
 
-    # candidate_sum = W_slots + W_values # size [label_size, vector_dimension]
+    #candidate_sum = W_slots + W_values # size [label_size, vector_dimension]
 
     w_candidates = tf.Variable(tf.random_normal([vector_dimension, vector_dimension]))
     b_candidates = tf.Variable(tf.zeros([vector_dimension]))
-
+    
     # multiply to get: [label_size, vector_dimension]
     candidates_transform = tf.nn.sigmoid(tf.matmul(W_values, w_candidates) + b_candidates)
 
-    # Next, multiply candidates [label_size, vector_dimension] each with the uttereance representations [None, vector_dimension], to get [None, label_size, vector_dimension]
+    # Next, multiply candidates [label_size, vector_dimension] each with the uttereance representations [None, vector_dimension], to get [None, label_size, vector_dimension] 
     # or utterance [None, vector_dimension] X [vector_dimension, label_size] to get [None, label_size]
-    # h_utterance_representation_candidate_interaction = tf.Variable(tf.zeros([None, label_size, vector_dimension]))
+    #h_utterance_representation_candidate_interaction = tf.Variable(tf.zeros([None, label_size, vector_dimension]))
 
     list_of_value_contributions = []
 
@@ -145,7 +145,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
     h_utterance_representation_candidate_interaction = tf.reshape(
         tf.transpose(tf.stack(list_of_value_contributions), [1, 0, 2]), [-1, vector_dimension])
-    # the same transform now runs across each value's vector, multiplying.
+    # the same transform now runs across each value's vector, multiplying. 
     w_joint_hidden_layer = tf.Variable(tf.random_normal([vector_dimension, hidden_units_1]))
     b_joint_hidden_layer = tf.Variable(tf.zeros([hidden_units_1]))
 
@@ -167,8 +167,9 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
     sysreq_contributions = []  # a list of contributions for each of the values
     confirm_contributions = []  # a list of contributions for each of the values
 
-    # =================== NETWORK FOR SYSTEM REQUESTS ==========================
 
+    # =================== NETWORK FOR SYSTEM REQUESTS ==========================
+    
     # is the current slot offered
     system_act_candidate_interaction = tf.multiply(W_slots[0, :],
                                                    system_act_slots)  # only multiply with slots for the requests.
@@ -177,7 +178,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
     # full_ones = tf.ones([tf.shape(dot_product_sysreq)[0], 1])
     # dot_product = tf.cast(tf.equal(dot_product_sysreq, full_ones), "float32")
 
-    decision = tf.multiply(tf.expand_dims(dot_product_sysreq, 1), h_utterance_representation)
+    decision = tf.multiply(tf.expand_dims(dot_product_sysreq, 1), h_utterance_representation) 
 
     sysreq_w_hidden_layer = tf.Variable(tf.random_normal([vector_dimension, hidden_units_1]))
     sysreq_b_hidden_layer = tf.Variable(tf.zeros([hidden_units_1]))
@@ -194,11 +195,11 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
         sysreq_contributions.append(sysreq_contribution)
 
-    sysreq = tf.concat(sysreq_contributions, 1)  # , [-1, label_size])
+    sysreq = tf.concat(sysreq_contributions, 1)  #, [-1, label_size])
 
     # =================== NETWORK FOR CONFIRMATIONS ==========================
 
-    # here, we do want to tie across all values, as it will get a different signal depending on whether both things match.
+    # here, we do want to tie across all values, as it will get a different signal depending on whether both things match. 
     confirm_w1_hidden_layer = tf.Variable(tf.random_normal([vector_dimension, hidden_units_1]))
     confirm_b1_hidden_layer = tf.Variable(tf.zeros([hidden_units_1]))
 
@@ -209,11 +210,11 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
         dot_product = tf.multiply(tf.reduce_mean(tf.multiply(W_slots[0, :], system_act_confirm_slots), 1),
                                   tf.reduce_mean(tf.multiply(W_values[value_idx, :], system_act_confirm_values),
                                                  1))  # dot product: slot equality and value equality
-
+        
         full_ones = tf.ones(tf.shape(dot_product))
         dot_product = tf.cast(tf.equal(dot_product, full_ones), "float32")
 
-        decision = tf.multiply(tf.expand_dims(dot_product, 1), h_utterance_representation)
+        decision = tf.multiply(tf.expand_dims(dot_product, 1), h_utterance_representation) 
 
         confirm_hidden_layer_1 = tf.nn.sigmoid(tf.matmul(decision, confirm_w1_hidden_layer) + confirm_b1_hidden_layer)
         confirm_hidden_layer_1_with_dropout = tf.nn.dropout(confirm_hidden_layer_1, keep_prob)
@@ -223,7 +224,9 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
     sysconf = tf.concat(confirm_contributions, 1)
 
+
     if use_softmax:
+
         append_zeros_none = tf.zeros([tf.shape(y_presoftmax)[0], 1])
         y_presoftmax = tf.concat([y_presoftmax, append_zeros_none], 1)
 
@@ -235,6 +238,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
     if use_delex_features:
         y_presoftmax = y_presoftmax + utterance_representations_delex
+
 
     # value-specific decoder:
     if value_specific_decoder and False:
@@ -264,14 +268,14 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
         if learn_belief_state_update:
 
             if value_specific_decoder:  # value-specific update
-
+                
                 update_coefficient = tf.constant(0.8)
 
                 ss_W_memory = tf.Variable(tf.random_normal([label_size, label_size]))
 
                 ss_W_current = tf.Variable(tf.random_normal([label_size, label_size]))
 
-                y_combine = tf.matmul(y_past_state, ss_W_memory) + tf.matmul(y_presoftmax, ss_W_current)
+                y_combine = tf.matmul(y_past_state, ss_W_memory) + tf.matmul(y_presoftmax, ss_W_current) 
 
             else:
 
@@ -287,8 +291,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
                 diag_current = a_current * tf.diag(tf.ones(label_size))
 
                 b_current = tf.Variable(tf.random_normal([1, 1]))
-                non_diag_current = tf.matrix_set_diag(b_current * tf.ones([label_size, label_size]),
-                                                      tf.zeros(label_size))
+                non_diag_current = tf.matrix_set_diag(b_current * tf.ones([label_size, label_size]), tf.zeros(label_size))
 
                 W_current = diag_current + non_diag_current
 
@@ -299,7 +302,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
         else:
 
-            update_coefficient = tf.Variable(0.5)  # this scales the contribution of the current turn.
+            update_coefficient = tf.Variable(0.5)  #this scales the contribution of the current turn.
             y_combine = update_coefficient * y_presoftmax + (1 - update_coefficient) * y_past_state
             y = tf.nn.softmax(y_combine)
 
@@ -319,6 +322,7 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
 
     # ============================= EVALUATION =====================================================
 
+
     if use_softmax:
         predictions = tf.cast(tf.argmax(y, 1), "float32")  # will have ones where positive
         true_predictions = tf.cast(tf.argmax(y_, 1), "float32")
@@ -327,12 +331,12 @@ def model_definition(vector_dimension, label_count, slot_vectors, value_vectors,
         accuracy = tf.reduce_mean(correct_prediction)
         # this will count number of positives - they are marked with 1 in true_predictions
         num_positives = tf.reduce_sum(true_predictions)
-        # positives are indicated with ones.
-        classified_positives = tf.reduce_sum(predictions)
+        # positives are indicated with ones. 
+        classified_positives = tf.reduce_sum(predictions) 
         # will have ones in all places where both are predicting positives
         true_positives = tf.multiply(predictions, true_predictions)
-        # if indicators for positive of both are 1, then it is positive.
-        num_true_positives = tf.reduce_sum(true_positives)
+        # if indicators for positive of both are 1, then it is positive. 
+        num_true_positives = tf.reduce_sum(true_positives)  
 
         recall = num_true_positives / num_positives
         precision = num_true_positives / classified_positives
