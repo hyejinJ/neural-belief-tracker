@@ -356,7 +356,7 @@ def evaluate_woz(evaluated_dialogues, dialogue_ontology):
 
         # if "req" in slot:
         # if slot in ["area", "food", "price range", "request"]:
-        # print "Slot:", slot, "Count:", total_count_curr, true_positives[slot], false_positives[slot], false_negatives[slot], "[Precision, Recall, Fscore]=", round(precision[slot], 2), round(recall[slot], 2), round(fscore[slot], 2)
+        #print "Slot:", slot, "Count:", total_count_curr, true_positives[slot], false_positives[slot], false_negatives[slot], "[Precision, Recall, Fscore]=", round(precision[slot], 2), round(recall[slot], 2), round(fscore[slot], 2)
         #print "Slot:", slot, "TP:", true_positives[slot], "FN:", false_negatives[slot], "FP:", false_positives[slot]
 
     
@@ -581,7 +581,7 @@ def load_woz_data(file_path, language, percentage=1.0, override_en_ontology=Fals
 
             transcription_and_asr = turn[0]
             current_utterance = (transcription_and_asr, turn[1], turn[2], turn[3], current_label,
-                                 turn[5])  # turn [5] is the past belief state
+                                 turn[5])  #turn [5] is the past belief state
 
             #print "$$$$", current_utterance
 
@@ -635,7 +635,7 @@ def track_dialogue_woz(model_variables, word_vectors, dialogue_ontology, woz_dia
     turn_count = len(woz_dialogue)
     # print "Turn count:", turn_count
 
-    slots_to_track = list(set(dialogue_ontology.keys()) & set(sessions.keys()))
+    slots_to_track = list(set(dialogue_ontology.keys()) & set(sessions.keys()) )
 
     for slot in slots_to_track: 
         belief_states[slot] = {}
@@ -670,7 +670,7 @@ def track_dialogue_woz(model_variables, word_vectors, dialogue_ontology, woz_dia
 
             if idx == 0 or slot == "request":
                 # this should put empty belief state
-                example = [(transcription_and_asr, req_slot, conf_slot, conf_value, prev_belief_state)]
+                example = [(transcription_and_asr, req_slot, conf_slot, conf_value, prev_belief_state)] 
             else:
                 # and this has the previous prediction, the one we just made in the previous iteration. We do not want to use the right one, the one used for training. 
                 example = [(transcription_and_asr, req_slot, conf_slot, conf_value, prev_bs)]
@@ -690,7 +690,7 @@ def track_dialogue_woz(model_variables, word_vectors, dialogue_ontology, woz_dia
             else:
                 updated_belief_state = sliding_window_over_utterance(sessions[slot], example, word_vectors,
                                                                      dialogue_ontology, mx, slot, print_mode=False)
-                # updated_belief_state = softmax(updated_belief_state)
+                #updated_belief_state = softmax(updated_belief_state)
                 #updated_belief_state = update_belief_state(prev_belief_states[slot], new_belief_state)
                 prev_belief_states[slot] = updated_belief_state
                 list_of_belief_states[idx][slot] = updated_belief_state
@@ -793,8 +793,8 @@ def generate_data(utterances, word_vectors, dialogue_ontology, target_slot):
 
             for (slotA, valueA) in utterance[4]:
                 if slotA == slot and (valueA != "none" and valueA != []):
-                    slot_expressed_in_utterance = True  #  if this is True, no negative examples for softmax.
-
+                    slot_expressed_in_utterance = True  # if this is True, no negative examples for softmax.
+                    
                     #if slot == "request":                
                     #    print slotA, valueA, utterance, utterance[4]
 
@@ -827,7 +827,7 @@ def generate_data(utterances, word_vectors, dialogue_ontology, target_slot):
                     positive_examples[slot].append((utterance_idx, utterance, values_expressed))
                     # print utterances[utterance_idx], "---", values_expressed
 
-        # positive_examples[slot] = set(positive_examples[slot])
+        #positive_examples[slot] = set(positive_examples[slot])
         #negative_examples[slot] = set(negative_examples[slot])
     
     return feature_vectors, positive_examples, negative_examples
@@ -1832,7 +1832,7 @@ class NeuralBeliefTracker:
         utterance = current_utterance.decode("utf-8")
         utterance = unicode(utterance.lower())
         utterance = utterance.replace(u".", u" ")
-        utterance = utterance.replace(u",", u" ")
+        utterance = utterance.replace(u",", u" ")  
         utterance = utterance.replace(u"?", u" ")  
         utterance = utterance.replace(u"-", u" ")
         utterance = utterance.strip()  
